@@ -1,8 +1,43 @@
+#!/usr/bin/env python
+
 __author__ = 'Nick Sifniotis'
 
+from Polynomial import Polynomial
 from matrix import Matrix
+import argparse
 import math
-import sys
+
+
+class ANSIEscapeCodes(object):
+    ESCAPE = '\033[%sm'
+    ENDC = ESCAPE % '0'
+
+    BOLD = '1;'
+    FAINT = '2;' # Not widely supported
+    ITALIC = '3;'
+    UNDERLINE = '4;'
+    SLOW_BLINK = '5;'
+    FAST_BLINK = '6;' # Not widely supported
+
+    COLORS = {
+        'black': '30',
+        'red': '31',
+        'green': '32',
+        'yellow': '33',
+        'blue': '34',
+        'magenta': '35',
+        'cyan': '36',
+        'white': '37',
+    }
+
+    def decorate(self, format, msg):
+        format_sequence = self.ESCAPE % format
+        return format_sequence + msg + self.ENDC
+
+    ### EXAMPLE USE ###
+
+    def white_bold_underlined(self, msg):
+        return self.decorate(self.BOLD + self.UNDERLINE + self.COLOR['white'], msg)
 
 
 def identity(n=3):
@@ -94,19 +129,14 @@ def solve(a, b):
     return lup_solve(l, u, p, b)
 
 
-if len(sys.argv) == 1:
-    print("Usage: python number_series.py number_1 number_2 ... number_N")
-    exit(0)
-
-args = sys.argv[1:]
+# start the script by getting the number series from the command line.
+parser = argparse.ArgumentParser()
+parser.add_argument('test_values', nargs='+', help='The number series to process.', metavar='N')
+results = parser.parse_args()
 test_values = []
-for value in args:
-    try:
-        number = int(value)
-        test_values.append(number)
-    except ValueError:
-        print("Error: " + value + " is not a number.")
-        exit(0)
+for string_num in vars(results)['test_values']:
+    test_values.append(int(string_num))
+
 
 num_nums = len(test_values)
 result_vector = vector(test_values)
@@ -116,16 +146,34 @@ for col in range(0, num_nums):
     for row in range(0, num_nums):
         working_matrix.set((row, col), math.pow(col + 1, row))
 
-result = solve(working_matrix, result_vector)
+result = Polynomial(solve(working_matrix, result_vector))
 
-output_string = ""
-for position in range(num_nums - 1, -1, -1):
-    if result.get((position, 0)) != 0:
-        output_string += " + " if output_string != "" else ""
-        output_string += "{:.2f}".format(result.get((position, 0)))
-        if position == 1:
-            output_string += "x"
-        elif position > 1:
-            output_string += "x^" + str(position)
 
-print(output_string)
+# display the polynomial equation that this series satisfies
+print("\033c")
+formatter = ANSIEscapeCodes()
+
+print(formatter.decorate(formatter.COLORS['white'], "Polynomial equation satisfying the number series"))
+print(formatter.decorate(formatter.COLORS['yellow'], str(result)))
+
+
+# compute the next logical point along the series.
+print()
+print(formatter.decorate(formatter.COLORS['white'], "Next logical point along series"))
+print(formatter.decorate(formatter.COLORS['yellow'], Polynomial.if_int_get_int(result.solve(num_nums + 1))))
+
+
+# compute the 'triangle of differences'
+print()
+print(formatter.decorate(formatter.COLORS['white'], "Triangle of Differences"))
+working_list = test_values
+while len(working_list) > 1:
+    print(formatter.decorate(formatter.COLORS['green'], str(working_list)))
+    new_list = []
+    for i in range(0, len(working_list) - 1):
+        new_list.append(working_list[i + 1] - working_list[i])
+    working_list = new_list
+print(formatter.decorate(formatter.COLORS['green'], str(working_list)))
+
+print()
+print()
