@@ -149,10 +149,18 @@ for col in range(0, num_nums):
 result = Polynomial(solve(working_matrix, result_vector))
 
 
-# display the polynomial equation that this series satisfies
+# output!
 print("\033c")
 formatter = ANSIEscapeCodes()
 
+
+# display the original series.
+print(formatter.decorate(formatter.COLORS['white'], "Input vector"))
+print(formatter.decorate(formatter.COLORS['red'], str(test_values)))
+
+
+# display the polynomial equation that this series satisfies
+print()
 print(formatter.decorate(formatter.COLORS['white'], "Polynomial equation satisfying the number series"))
 print(formatter.decorate(formatter.COLORS['yellow'], str(result)))
 
